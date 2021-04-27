@@ -153,6 +153,7 @@ int checkFirmwareVersion()
   else
   {
     Serial.println("HTTP did not connexfrsadas");
+    Serial.println(httpCode);
   }
   return 0;
 }
