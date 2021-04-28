@@ -10,8 +10,8 @@
 #define SSID "Berm"
 #define PASS "0737373783"
 #define VERSION 001
-#define VERSION_URL "https://raw.githubusercontent.com/CTRL-ALT-D3L/OTAtest/main/version.txt"
-#define FIRMWARE_URL "https://raw.githubusercontent.com/CTRL-ALT-D3L/OTAtest/main/firmware.bin"
+#define VERSION_URL "https://raw.githubusercontent.com/CTRL-ALT-D3L/OTAtest/main/meta/version.txt"
+#define FIRMWARE_URL "https://raw.githubusercontent.com/CTRL-ALT-D3L/OTAtest/main/meta/firmware.bin"
 
 void connectWifi();
 void firmwareUpdate();
@@ -98,11 +98,11 @@ int checkFirmwareVersion()
 {
   String payload;
   int httpCode = HTTP_CODE_BAD_REQUEST;
-  String fwurl = "";
-  fwurl += VERSION_URL;
-  fwurl += "?";
-  fwurl += String(rand());
-  Serial.println(fwurl);
+  //String fwurl = "";
+  //fwurl += VERSION_URL;
+  //fwurl += "?";
+  //fwurl += String(rand());
+  //Serial.println(fwurl);
   WiFiClientSecure *client = new WiFiClientSecure;
 
   if (client)
@@ -112,7 +112,7 @@ int checkFirmwareVersion()
     // Add a scoping block for HTTPClient https to make sure it is destroyed before WiFiClientSecure *client is
     HTTPClient https;
 
-    if (https.begin(*client, fwurl))
+    if (https.begin(*client, VERSION_URL))
     { // HTTPS
       Serial.print("[HTTPS] GET...\n");
       // start connection and send HTTP header
