@@ -15,7 +15,7 @@
 
 void connectWifi();
 void firmwareUpdate();
-int checkFirmwareVersion();
+int getGithubFirmwareVersion();
 
 //************************************************************************************************//
 
@@ -24,23 +24,21 @@ void setup()
   Serial.begin(115200);
   pinMode(LED_BUILTIN, OUTPUT);
 
-  Serial.print("Active firmware version:");
+  Serial.print("\nCurrent firmware version: ");
   Serial.println(VERSION);
   connectWifi();
+  Serial.print("Github firmware version: ");
+  int v = getGithubFirmwareVersion();
+  Serial.println(v);
+  if (v > VERSION)
+  {
+    Serial.println("Firmware update starting...");
+    firmwareUpdate();
+  }
 }
 
 void loop()
 {
-  int v = checkFirmwareVersion();
-  Serial.print("\nCurrent firmware version: ");
-  Serial.println(VERSION);
-  Serial.print("Github firmware version: ");
-  Serial.println(v);
-  if (v > VERSION)
-  {
-    Serial.println("Firmware update Starting..");
-    firmwareUpdate();
-  }
   delay(10000);
 }
 
@@ -94,68 +92,37 @@ void firmwareUpdate()
   }
 }
 
-int checkFirmwareVersion()
+int getGithubFirmwareVersion()
 {
-  String payload;
-  int httpCode = HTTP_CODE_BAD_REQUEST;
+  int httpCode = -1;
   //String fwurl = "";
   //fwurl += VERSION_URL;
   //fwurl += "?";
   //fwurl += String(rand());
   //Serial.println(fwurl);
-  WiFiClientSecure *client = new WiFiClientSecure;
+  WiFiClientSecure client;
 
-  if (client)
+  if (client.connected())
   {
-    client->setCACert(rootCACertificate);
-
-    // Add a scoping block for HTTPClient https to make sure it is destroyed before WiFiClientSecure *client is
+    client.setCACert(rootCACertificate);
     HTTPClient https;
-
-    if (https.begin(*client, VERSION_URL))
-    { // HTTPS
-      Serial.print("[HTTPS] GET...\n");
-      // start connection and send HTTP header
+    if (https.begin(client, VERSION_URL))
+    {
       delay(100);
       httpCode = https.GET();
-      delay(100);
-      if (httpCode == HTTP_CODE_OK) // if version received
+      Serial.print("[HTTPS] GET... ");
+      Serial.println(httpCode);
+      if (httpCode == HTTP_CODE_OK)
       {
-        payload = https.getString(); // save received version
+        https.end();
+        return charArray::toInt(https.getString().c_str());
       }
-      else
-      {
-        Serial.print("error in downloading version file:");
-        Serial.println(httpCode);
-      }
+      Serial.print("error in downloading version file: ");
+      Serial.println(https.errorToString(httpCode));
       https.end();
     }
-    delete client;
   }
-
-  if (httpCode == HTTP_CODE_OK) // if version received
-  {
-    payload.trim();
-    int v = charArray::toInt(payload.c_str());
-    Serial.println(v);
-    if (v <= VERSION)
-    {
-      Serial.print("Device already on latest firmware version: ");
-      Serial.println(VERSION);
-    }
-    else
-    {
-      Serial.println(payload);
-      Serial.println("New firmware detected");
-    }
-    return v;
-  }
-  else
-  {
-    Serial.println("HTTP did not connexfrsadas");
-    Serial.println(httpCode);
-  }
-  return 0;
+  return -1;
 }
 
 //
