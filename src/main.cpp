@@ -25,23 +25,25 @@ void setup()
   pinMode(LED_BUILTIN, OUTPUT);
 
   connectWifi();
-}
 
-void loop()
-{
   Serial.print("\nCurrent firmware version: ");
   Serial.println(VERSION);
-  
-  Serial.print("Github firmware version: ");
+
   int v = getGithubFirmwareVersion();
+  Serial.print("Github firmware version: ");
   Serial.println(v);
   if (v > VERSION)
   {
     Serial.println("Firmware update starting...");
-    firmwareUpdate();
+    //firmwareUpdate();
   }
+}
+
+void loop()
+{
+
   delay(10000);
-  Serial.println(":LKSDFJ:SLDKFJ:SDFJ:LFSJ");
+  //Serial.println(":LKSDFJ:SLDKFJ:SDFJ:LFSJ");
 }
 
 //************************************************************************************************//
@@ -94,93 +96,28 @@ void firmwareUpdate()
   }
 }
 
-int zgetGithubFirmwareVersion()
+int getGithubFirmwareVersion()
 {
-  int httpCode;
-  //String fwurl = "";
-  //fwurl += VERSION_URL;
-  //fwurl += "?";
-  //fwurl += String(rand());
-  //Serial.println(fwurl);
+  int out = -1;
   WiFiClientSecure client;
-
-  if (client)
-  {
-    client.setCACert(rootCACertificate);
+  client.setCACert(rootCACertificate);
+  { // Add a scoping block for HTTPClient https to make sure it is destroyed before WiFiClientSecure client is
     HTTPClient https;
     if (https.begin(client, VERSION_URL))
     {
-      delay(100);
-      httpCode = https.GET();
-      delay(100);
-      Serial.print("[HTTPS] GET... ");
-      Serial.println(httpCode);
-      if (httpCode == HTTP_CODE_OK)
-      {
-        https.end();
-        return charArray::toInt(https.getString().c_str());
-      }
-      Serial.print("error in downloading version file: ");
-      Serial.println(https.errorToString(httpCode));
-    }
-    https.end();
-    return -2;
-  }
-  return -1;
-}
-
-
-int getGithubFirmwareVersion() {
-  String payload;
-  int httpCode = -1;
-  String fwurl = "";
-  fwurl += VERSION_URL;
-  fwurl += "?";
-  fwurl += String(rand());
-  Serial.println(fwurl);
-  WiFiClientSecure * client = new WiFiClientSecure;
-
-  if (client) 
-  {
-    client -> setCACert(rootCACertificate);
-
-    // Add a scoping block for HTTPClient https to make sure it is destroyed before WiFiClientSecure *client is 
-    HTTPClient https;
-
-    if (https.begin( * client, fwurl)) 
-    { // HTTPS      
       Serial.print("[HTTPS] GET...\n");
-      // start connection and send HTTP header
-      delay(100);
-      httpCode = https.GET();
-      delay(100);
-      if (httpCode == HTTP_CODE_OK) // if version received
+      int httpCode = https.GET();
+      if (httpCode == HTTP_CODE_OK)
+        out = https.getString().toInt();
+      else
       {
-        payload = https.getString(); // save received version
-      } else {
         Serial.print("error in downloading version file:");
         Serial.println(httpCode);
       }
       https.end();
     }
-    delete client;
   }
-      
-  if (httpCode == HTTP_CODE_OK) // if version received
-  {
-    payload.trim();
-    if (payload.toInt() <= VERSION) {
-      Serial.printf("\nDevice already on latest firmware version: %d\n", VERSION);
-      return VERSION;
-    } 
-    else 
-    {
-      Serial.println(payload);
-      Serial.println("New firmware detected");
-      return charArray::toInt(payload.c_str());
-    }
-  } 
-  return VERSION;  
+  return out;
 }
 
 //
